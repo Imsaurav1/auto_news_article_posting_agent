@@ -6,7 +6,7 @@ import logging
 import feedparser
 import requests
 from datetime import datetime, timedelta, timezone
-from StudyMaterial.news_bot.config import CONFIG
+from config import CONFIG
 
 log = logging.getLogger(__name__)
 

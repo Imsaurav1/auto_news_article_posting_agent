@@ -13,7 +13,7 @@ import logging
 import requests
 from datetime import datetime
 from pathlib import Path
-from StudyMaterial.news_bot.config import CONFIG
+from config import CONFIG
 
 log = logging.getLogger(__name__)
 

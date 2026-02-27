@@ -12,7 +12,7 @@ import time
 import logging
 import datetime
 import subprocess
-from StudyMaterial.news_bot.config import CONFIG
+from config import CONFIG
 
 logging.basicConfig(
     level=logging.INFO,

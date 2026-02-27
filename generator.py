@@ -7,7 +7,7 @@ import json
 import logging
 import datetime
 import requests
-from StudyMaterial.news_bot.config import CONFIG
+from config import CONFIG
 
 log = logging.getLogger(__name__)
 
