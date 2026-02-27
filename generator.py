@@ -41,14 +41,14 @@ Today is {today}. I have gathered the following latest news articles from tech/A
 
 {news_block}
 
-Based on these real news items, write a comprehensive, engaging news roundup article.
+Based on these real news items, write a comprehensive, engaging tech news article.
 
 Return your response as a valid JSON object. No markdown, no code fences, no explanation — ONLY raw JSON.
 
 Use this exact structure:
 {{
-  "title": "Catchy SEO-friendly title (max 70 chars)",
-  "excerpt": "2-sentence summary of the article (max 200 chars)",
+  "title": "Specific headline referencing the actual top story (max 70 chars)",
+  "excerpt": "2-sentence summary mentioning the specific topics covered (max 200 chars)",
   "meta_keywords": "8-12 comma-separated keywords",
   "tags": ["AI", "Technology", "Automation"],
   "reading_time": 5,
@@ -58,11 +58,19 @@ Use this exact structure:
   ]
 }}
 
+CRITICAL REQUIREMENTS for title:
+- NEVER use generic titles like "Tech News Roundup" or "Weekly Digest"
+- MUST reference a specific technology, company, product, or trend from today's articles
+- Good examples: "OpenAI's New Model Challenges Google as AI Race Heats Up"
+                  "Llama 4 Leaked: Meta's Next AI Model Could Rival GPT-5"
+                  "Cybersecurity Breaches Surge as AI-Powered Attacks Hit Record High"
+- The title should make someone curious enough to click
+
 REQUIREMENTS for content field:
 - Write 800-1200 words of ORIGINAL content (not copied from sources)
 - Use proper HTML tags only: <h2>, <h3>, <p>, <ul>, <li>, <strong>, <em>
-- Start with a strong intro paragraph
-- Cover 3-5 major stories from the news items above
+- Start with a strong intro paragraph referencing today's biggest story
+- Cover 3-5 major stories from the news items above with a <h2> for each
 - Include a "Key Takeaways" section near the end
 - End with a brief forward-looking conclusion
 - NO <html>, <head>, <body>, or <script> wrapper tags
