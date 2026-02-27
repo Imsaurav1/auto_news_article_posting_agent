@@ -34,7 +34,7 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-RUN_TIMES = ["06:00", "09:00", "12:00", "15:00", "18:00"]
+RUN_TIMES = ["06:00", "09:00", "11:00", "13:00", "15:00", "17:00", "21:00", "23:00", "02:00", "04:00"]  # UTC times for each run
 
 # Track last run for health endpoint
 last_run_info = {"time": "never", "status": "pending"}
