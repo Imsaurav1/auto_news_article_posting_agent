@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
 """
 TechNews Auto-Publisher
-━━━━━━━━━━━━━━━━━━━━━━━
-Runs 5x daily. Each run:
-  1. Fetches latest tech/AI/science news
-  2. Generates a unique article via Groq (llama-3.3-70b-versatile)
-  3. POSTs to MongoDB via your /api/posts endpoint
-  4. Regenerates sitemap.xml
+Runs 5x daily via scheduler.py.
+Each run: Fetch → Generate → Publish to MongoDB → Update sitemap
 """
 
 import json
@@ -33,7 +29,7 @@ log = logging.getLogger(__name__)
 
 def load_todays_slugs() -> set:
     path  = Path("data/published.json")
-    today = datetime.datetime.utcnow().strftime("%Y-%m-%d")
+    today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
     if path.exists():
         data = json.loads(path.read_text())
         return set(data.get(today, []))
@@ -42,12 +38,12 @@ def load_todays_slugs() -> set:
 
 def save_slug(slug: str):
     path  = Path("data/published.json")
-    today = datetime.datetime.utcnow().strftime("%Y-%m-%d")
+    today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
     Path("data").mkdir(exist_ok=True)
 
-    data    = json.loads(path.read_text()) if path.exists() else {}
-    cutoff  = (datetime.datetime.utcnow() - datetime.timedelta(days=7)).strftime("%Y-%m-%d")
-    data    = {k: v for k, v in data.items() if k >= cutoff}
+    data   = json.loads(path.read_text()) if path.exists() else {}
+    cutoff = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=7)).strftime("%Y-%m-%d")
+    data   = {k: v for k, v in data.items() if k >= cutoff}
 
     data.setdefault(today, [])
     if slug not in data[today]:
@@ -56,7 +52,7 @@ def save_slug(slug: str):
 
 
 def _run_number_today() -> int:
-    hour = datetime.datetime.utcnow().hour
+    hour = datetime.datetime.now(datetime.timezone.utc).hour
     if   hour <  7: return 1
     elif hour < 10: return 2
     elif hour < 13: return 3
@@ -65,7 +61,7 @@ def _run_number_today() -> int:
 
 
 def run():
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(datetime.timezone.utc)
     log.info("=" * 60)
     log.info(f"🚀 TechNews Bot — Run {_run_number_today()}/5")
     log.info(f"   {now.strftime('%Y-%m-%d %H:%M:%S')} UTC")
