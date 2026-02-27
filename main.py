@@ -2,10 +2,11 @@
 """
 TechNews Auto-Publisher
 ━━━━━━━━━━━━━━━━━━━━━━━
-Fetches latest tech/AI/science news → generates article via Groq AI (Llama 3.3)
-→ publishes to MongoDB via your existing /api/posts endpoint
-→ regenerates sitemap.xml
-→ pings Google + submits via IndexNow (no account/card needed)
+Runs 5x daily. Each run:
+  1. Fetches latest tech/AI/science news
+  2. Generates a unique article via Groq (llama-3.3-70b-versatile)
+  3. POSTs to MongoDB via your /api/posts endpoint
+  4. Regenerates sitemap.xml
 """
 
 import json
@@ -17,9 +18,7 @@ from fetcher import fetch_news
 from generator import generate_article
 from publisher import publish_article
 from sitemap import generate_sitemap
-from indexer import submit_to_google
 
-# ── Logging ───────────────────────────────────────────────────────────────────
 Path("logs").mkdir(exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
@@ -32,31 +31,48 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
-def load_published_slugs() -> set:
-    path = Path("data/published.json")
+def load_todays_slugs() -> set:
+    path  = Path("data/published.json")
+    today = datetime.datetime.utcnow().strftime("%Y-%m-%d")
     if path.exists():
-        return set(json.loads(path.read_text()))
+        data = json.loads(path.read_text())
+        return set(data.get(today, []))
     return set()
 
 
-def save_published_slug(slug: str):
+def save_slug(slug: str):
+    path  = Path("data/published.json")
+    today = datetime.datetime.utcnow().strftime("%Y-%m-%d")
     Path("data").mkdir(exist_ok=True)
-    path = Path("data/published.json")
-    slugs = load_published_slugs()
-    slugs.add(slug)
-    path.write_text(json.dumps(list(slugs), indent=2))
+
+    data    = json.loads(path.read_text()) if path.exists() else {}
+    cutoff  = (datetime.datetime.utcnow() - datetime.timedelta(days=7)).strftime("%Y-%m-%d")
+    data    = {k: v for k, v in data.items() if k >= cutoff}
+
+    data.setdefault(today, [])
+    if slug not in data[today]:
+        data[today].append(slug)
+    path.write_text(json.dumps(data, indent=2))
+
+
+def _run_number_today() -> int:
+    hour = datetime.datetime.utcnow().hour
+    if   hour <  7: return 1
+    elif hour < 10: return 2
+    elif hour < 13: return 3
+    elif hour < 16: return 4
+    else:           return 5
 
 
 def run():
+    now = datetime.datetime.utcnow()
     log.info("=" * 60)
-    log.info("🚀 TechNews Auto-Publisher — Daily Run")
-    log.info(f"   {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} UTC")
+    log.info(f"🚀 TechNews Bot — Run {_run_number_today()}/5")
+    log.info(f"   {now.strftime('%Y-%m-%d %H:%M:%S')} UTC")
     log.info("=" * 60)
 
     Path("data").mkdir(exist_ok=True)
     Path("output").mkdir(exist_ok=True)
-
-    published = load_published_slugs()
 
     # ── 1. Fetch News ──────────────────────────────────────────────────────────
     log.info("📡 Step 1: Fetching latest news...")
@@ -66,16 +82,11 @@ def run():
         return
     log.info(f"   Found {len(articles)} relevant articles")
 
-    # ── 2. Generate Article via Groq AI ───────────────────────────────────────
-    log.info("✍️  Step 2: Generating article via Groq (llama-3.3-70b-versatile)...")
-    result = generate_article(articles)
+    # ── 2. Generate Article ────────────────────────────────────────────────────
+    log.info("✍️  Step 2: Generating article via Groq...")
+    result = generate_article(articles, run_number=_run_number_today())
     if not result:
         log.error("Article generation failed. Exiting.")
-        return
-
-    slug = result["slug"]
-    if slug in published:
-        log.warning(f"Article '{slug}' already published today. Skipping.")
         return
 
     # ── 3. Publish to MongoDB ─────────────────────────────────────────────────
@@ -86,23 +97,14 @@ def run():
         return
 
     log.info(f"   ✅ Live at: {published_url}")
-    save_published_slug(slug)
+    save_slug(result["slug"])
 
     # ── 4. Regenerate Sitemap ─────────────────────────────────────────────────
     log.info("🗺️  Step 4: Regenerating sitemap.xml...")
-    sitemap_path = generate_sitemap(new_slug=slug)
-    log.info(
-        f"   ✅ sitemap.xml saved to {sitemap_path}\n"
-        f"   📋 Upload this file to your site root so it's live at:\n"
-        f"      {CONFIG['site']['base_url']}/sitemap.xml"
-    )
-
-    # ── 5. Submit for Indexing ────────────────────────────────────────────────
-    log.info("🔍 Step 5: Submitting to search engines...")
-    submit_to_google(published_url)
+    generate_sitemap(new_slug=result["slug"])
 
     log.info("=" * 60)
-    log.info("✅ All done!")
+    log.info(f"✅ Done! Run {_run_number_today()}/5 complete.")
     log.info("=" * 60)
 
 
