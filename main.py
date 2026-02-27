@@ -53,13 +53,18 @@ def save_slug(slug: str):
 
 def _run_number_today() -> int:
     hour = datetime.datetime.now(datetime.timezone.utc).hour
-    if   hour <  7: return 1
-    elif hour < 10: return 2
-    elif hour < 13: return 3
-    elif hour < 16: return 4
-    else:           return 5
+    if   hour <  6:  return 1
+    elif hour <  8:  return 2
+    elif hour < 10:  return 3
+    elif hour < 12:  return 4
+    elif hour < 14:  return 5
+    elif hour < 16:  return 6
+    elif hour < 18:  return 7
+    elif hour < 20:  return 8
+    elif hour < 22:  return 9
+    else:            return 10
 
-
+    
 def run():
     now = datetime.datetime.now(datetime.timezone.utc)
     log.info("=" * 60)

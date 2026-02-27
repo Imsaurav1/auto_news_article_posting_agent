@@ -96,7 +96,7 @@ def fetch_from_rss() -> list[dict]:
                 if title and summary:
                     articles.append({
                         "title": title,
-                        "summary": summary[:500],
+                        "summary": summary[:800],
                         "url": entry.get("link", ""),
                         "source": feed.feed.get("title", feed_url),
                         "published": pub.isoformat() if pub else "",

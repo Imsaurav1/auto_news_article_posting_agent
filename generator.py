@@ -40,6 +40,31 @@ RUN_ANGLES = {
         "style":   "educational — explain complex research in clear, accessible language",
         "label":   "Science & Research Roundup",
     },
+    6: {
+        "focus":   "cybersecurity threats, data breaches, and privacy news",
+        "style":   "cautionary — explain risks and what users/companies should do",
+        "label":   "Cybersecurity Watch",
+    },
+    7: {
+        "focus":   "startup ecosystem — new launches, funding rounds, acquisitions",
+        "style":   "exciting and entrepreneurial — who's disrupting what",
+        "label":   "Startup & VC Report",
+    },
+    8: {
+        "focus":   "consumer tech — gadgets, apps, phones, wearables",
+        "style":   "accessible and enthusiastic — written for everyday tech users",
+        "label":   "Consumer Tech Update",
+    },
+    9: {
+        "focus":   "cloud computing, developer tools, and open source news",
+        "style":   "technical but clear — written for developers and engineers",
+        "label":   "Dev & Cloud Digest",
+    },
+    10: {
+        "focus":   "global tech policy, regulation, and big tech controversies",
+        "style":   "balanced and analytical — cover multiple perspectives",
+        "label":   "Tech Policy & Regulation",
+    },
 }
 
 
@@ -53,7 +78,7 @@ def slugify(text: str) -> str:
 
 
 def build_prompt(articles: list[dict], run_number: int = 1) -> str:
-    """Build the Groq prompt, varying angle by run number (1–5)."""
+    """Build the Groq prompt, varying angle by run number."""
     today  = datetime.datetime.now().strftime("%B %d, %Y")
     angle  = RUN_ANGLES.get(run_number, RUN_ANGLES[1])
 
@@ -63,54 +88,66 @@ def build_prompt(articles: list[dict], run_number: int = 1) -> str:
 Article {i}:
   Title: {art['title']}
   Source: {art['source']}
-  Summary: {art['summary'][:300]}
+  Summary: {art['summary'][:500]}
   URL: {art['url']}
 """
 
-    return f"""You are a professional tech journalist writing for a popular technology blog.
+    return f"""You are a news reporter writing for a tech news website. Today is {today}.
 
-Today is {today}. This is article #{run_number} of 5 for today.
+Your job is to REPORT the actual news stories below — like a journalist, not a blogger.
+This article's focus: {angle['focus']}
 
-TODAY'S FOCUS: {angle['focus']}
-WRITING STYLE: {angle['style']}
-SECTION LABEL: {angle['label']}
-
-Here are the latest news articles to draw from:
+NEWS ARTICLES TO REPORT ON:
 {news_block}
 
-Write an original article focused specifically on: {angle['focus']}
+STRICT RULES — read carefully:
 
-Return ONLY a raw JSON object with this exact structure (no markdown, no code fences):
+1. REPORT THE ACTUAL NEWS — Every paragraph must be about something that actually happened in the articles above.
+   - Use real names: companies, people, products, numbers mentioned in the articles
+   - Example GOOD: "Jack Dorsey's Block announced it is cutting 40% of its workforce, citing AI automation as the reason."
+   - Example BAD: "Many companies are using AI to reduce costs." (too vague, not from the news)
+
+2. NO GENERIC AI FILLER — Do NOT write these kinds of sentences:
+   - "This raises important questions about the future of work"
+   - "Experts predict that automation will continue to grow"
+   - "It remains to be seen how this will impact the industry"
+   - "This is a significant development in the world of technology"
+   - Any sentence that could appear in ANY article regardless of the news
+
+3. REWRITE IN YOUR OWN WORDS — Do not copy sentences from the summaries.
+   Rephrase the actual facts naturally, like a human journalist would.
+   Use a conversational but professional tone — short sentences, active voice.
+
+4. STRUCTURE — Each <h2> section must cover ONE specific news story:
+   - Start directly with what happened: who, what, when, where
+   - Give the key facts and numbers from that story
+   - One short paragraph on why it matters — based on facts in the article, not opinion
+   - Do NOT end with "only time will tell" or "the future is uncertain" type phrases
+
+5. OPENING PARAGRAPH — Start with the most interesting/surprising fact from the news, not a general statement.
+   - BAD: "The technology industry has been seeing major changes lately."
+   - GOOD: "Block just eliminated 1,748 jobs in a single announcement — and its CEO says AI is why."
+
+Return ONLY a raw JSON object (no markdown, no code fences):
 {{
-  "title": "Specific headline about {angle['focus']} (max 70 chars)",
-  "excerpt": "2-sentence summary highlighting the specific angle covered (max 200 chars)",
-  "meta_keywords": "8-12 comma-separated keywords relevant to this article",
+  "title": "Headline using a real fact, name, or number from today's news (max 70 chars)",
+  "excerpt": "2 sentences summarizing the actual news covered, with specific details (max 200 chars)",
+  "meta_keywords": "8-12 comma-separated keywords from the actual stories",
   "tags": ["AI", "Technology"],
   "reading_time": 5,
-  "content": "<h2>...</h2><p>...</p>",
+  "content": "<p>Opening with the most surprising fact...</p><h2>Story 1 headline</h2><p>...</p>",
   "sources": [
     {{"name": "Source Name", "url": "https://..."}}
   ]
 }}
 
-CRITICAL — title rules:
-- NEVER use "Tech News Roundup", "Weekly Digest", or any generic title
-- MUST reference a specific company, product, technology, or person from the articles
-- Should be written as a compelling news headline that makes people want to click
-- Good example: "Nvidia's New AI Chip Threatens Intel's Data Center Dominance"
-
-REQUIREMENTS for content:
-- 800-1200 words of ORIGINAL writing
-- HTML tags only: <h2>, <h3>, <p>, <ul>, <li>, <strong>, <em>
-- Open with a strong hook tied to today's biggest story in this angle
-- Cover 3-5 stories with a <h2> heading for each
-- Include a "Key Takeaways" <h2> section near the end
-- Close with a forward-looking conclusion paragraph
-- NO <html>, <head>, <body>, <script> tags
-- Analyze and synthesize — do not copy text from sources
+TITLE RULES:
+- Must contain a real name, company, number, or product from today's articles
+- NEVER: "Tech Roundup", "AI News", "This Week in Tech", or any generic title
+- GOOD: "Block Cuts 1,748 Jobs as Dorsey Bets on AI Over Headcount"
+- GOOD: "Nvidia Hits $3T Valuation as Jensen Huang Dismisses Rivals"
 
 RETURN ONLY THE RAW JSON OBJECT."""
-
 
 def call_groq(prompt: str) -> str | None:
     """Call the Groq API."""
