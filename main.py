@@ -12,12 +12,12 @@ import json
 import logging
 import datetime
 from pathlib import Path
-from StudyMaterial.news_bot.config import CONFIG
-from StudyMaterial.news_bot.fetcher import fetch_news
-from StudyMaterial.news_bot.generator import generate_article
-from StudyMaterial.news_bot.publisher import publish_article
-from StudyMaterial.news_bot.sitemap import generate_sitemap
-from StudyMaterial.news_bot.indexer import submit_to_google
+from config import CONFIG
+from fetcher import fetch_news
+from generator import generate_article
+from publisher import publish_article
+from sitemap import generate_sitemap
+from indexer import submit_to_google
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 Path("logs").mkdir(exist_ok=True)
